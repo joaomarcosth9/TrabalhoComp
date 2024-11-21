@@ -34,7 +34,7 @@ data Token
   | TDOUBLE
   | TSTRING
   | TVOID
-  | ASSING
+  | ASSIGN
   
   
   deriving (Eq, Show)
