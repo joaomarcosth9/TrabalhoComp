@@ -52,3 +52,7 @@ data Comando =
     | Ret (Maybe Expr)
     | Proc Id [Expr]
     deriving Show
+
+
+aux :: (Funcao, ([Var], Bloco)) -> (Id, [Var], Bloco)
+aux ((id :->: (vars, tipo)), (vars', bloco)) = (id, vars ++ vars', bloco)
