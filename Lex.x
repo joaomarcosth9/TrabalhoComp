@@ -10,8 +10,8 @@ $digit = [0-9]          -- digits
 $letter = [a-zA-Z]      -- letters
 @id = ($letter | \_)($letter | $digit | \_)* -- identifier
 @int = $digit+
-@double = $digit+(\.$digit+)? -- double
-@literal = \"[^\"]*\"     -- string
+@double = $digit+(\.$digit+)?
+@literal = \"[^\"]*\"
 
 tokens :-
 

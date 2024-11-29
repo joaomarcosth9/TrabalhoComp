@@ -48,10 +48,6 @@ import ASTree
 
 %%
 
---- data Programa = Prog [Funcao] [(Id, [Var], Bloco)] [Var] Bloco deriving Show
-
---- $1 = [(Funcao, MainBlock), (Funcao, MainBlock), ...]
-
 Program : FunctionList MainBlock { Prog (map fst $1) (map aux $1) (fst $2) (snd $2) }
         | MainBlock              { Prog [] [] (fst $1) (snd $1) }
 
@@ -99,7 +95,7 @@ Command : IfCommand {$1}
 
 
 Return : 'return' AritExpr ';' {Ret (Just $2)}
-       | 'return' Literal ';' {Ret (Just (Lit $2))}
+--        | 'return' Literal ';' {Ret (Just (Lit $2))}
        | 'return' ';' {Ret (Nothing)}
 
 IfCommand : 'if' '(' LogicalExpr ')' Block {If $3 $5 []}
@@ -108,10 +104,10 @@ IfCommand : 'if' '(' LogicalExpr ')' Block {If $3 $5 []}
 WhileCommand : 'while' '(' LogicalExpr ')' Block {While $3 $5}
 
 AttribCommand : Name '=' AritExpr ';' {Atrib $1 $3}
-              | Name '=' Literal ';' {Atrib $1 (Lit $3)}
+        --       | Name '=' Literal ';' {Atrib $1 (Lit $3)}
 
 WriteCommand : 'print' '(' AritExpr ')' ';' {Imp $3}
-             | 'print' '(' Literal ')' ';' {Imp (Lit $3)}
+        --      | 'print' '(' Literal ')' ';' {Imp (Lit $3)}
 
 ReadCommand : 'read' '(' Name ')' ';' {Leitura $3}
 
@@ -122,8 +118,8 @@ FunctionCall : Name '(' FunctionParameterList ')'   {($1, $3)}
 
 FunctionParameterList : FunctionParameterList ',' AritExpr        {$1 ++ [$3]}
                       | AritExpr                          {[$1]}
-                      | FunctionParameterList ',' Literal     {$1 ++ [Lit $3]}
-                      | Literal                       {[Lit $1]}
+                --       | FunctionParameterList ',' Literal     {$1 ++ [Lit $3]}
+                --       | Literal                       {[Lit $1]}
 
 LogicalExpr : LogicalExpr '||' LogicalTerm  {Or $1 $3}
             | LogicalExpr '&&' LogicalTerm  {And $1 $3}
@@ -153,15 +149,24 @@ Term  : Term '*' Factor     {Mul $1 $3}
 Factor : Int                {Const (CInt $1)}
        | Double             {Const (CDouble $1)}
        | Name               {IdVar $1}
+       | Literal            {Lit $1}
        | FunctionCall       {Chamada (fst $1) (snd $1)}
        | '(' AritExpr ')'   {$2}      
-
+       | '-' Factor         {Neg $2}
 
 {
 parseError :: [Token] -> a
 parseError s = error ("Parse error:" ++ show s)
 
+runin = do 
+        s <- readFile "in"
+        print (calc (L.alexScanTokens s))
+
 main = do 
-          s <- readFile "in"
-          print (calc (L.alexScanTokens s))
+        txt <- getLine
+        s <- readFile txt
+        print (calc (L.alexScanTokens s))
 }
+
+
+

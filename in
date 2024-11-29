@@ -1,22 +1,11 @@
-int fun(int a, int b) {
-    int c;
-    return (a * b) + c;
-}
 {
     int a;
     double b;
     string s, t;
-    b = 4.3;
-    a = 1;
-    t = "bomba";
-    s = "ababa";
-    if (a == 34) {
-        a = 4 * (b + 4.343);
+    if (s == "aba") {
+        s = t;
     }
-    if (t == s) {
-        t = "bomba";
-    }
-    while (a > 10) {
-        a = a - 1;
-    }
+    b = "a" + b;
+    a = a - - 1;
+    a = - (a + b);
 }
