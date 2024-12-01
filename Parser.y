@@ -158,14 +158,17 @@ Factor : Int                {Const (CInt $1)}
 parseError :: [Token] -> a
 parseError s = error ("Parse error:" ++ show s)
 
+genAST :: String -> Programa
+genAST text = calc (L.alexScanTokens text)
+
 run = do 
         s <- readFile "in"
-        print (calc (L.alexScanTokens s))
+        print (genAST s)
 
 main = do 
         txt <- getLine
         s <- readFile txt
-        print (calc (L.alexScanTokens s))
+        print (genAST s)
 }
 
 

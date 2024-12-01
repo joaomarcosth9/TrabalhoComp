@@ -975,14 +975,17 @@ happySeq = happyDontSeq
 parseError :: [Token] -> a
 parseError s = error ("Parse error:" ++ show s)
 
+genAST :: String -> Programa
+genAST text = calc (L.alexScanTokens text)
+
 run = do 
         s <- readFile "in"
-        print (calc (L.alexScanTokens s))
+        print (genAST s)
 
 main = do 
         txt <- getLine
         s <- readFile txt
-        print (calc (L.alexScanTokens s))
+        print (genAST s)
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
 
 #if !defined(__GLASGOW_HASKELL__)
