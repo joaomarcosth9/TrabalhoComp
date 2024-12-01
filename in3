@@ -2,8 +2,13 @@ int fun(int a, int b) {
     int c;
     return (a * b) + c;
 }
+void go(int a, int b) {
+    return;
+}
 {
     int a;
+    double a;
+    string a;
     double b;
     string s, t;
     b = 4.3;
