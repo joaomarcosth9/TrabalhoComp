@@ -39,8 +39,6 @@ data Var = Id :#: (Tipo, Int) deriving Show
 
 data Funcao = Id :->: ([Var], Tipo) deriving Show
 
-data Programa = Prog [Funcao] [(Id, [Var], Bloco)] [Var] Bloco deriving Show
-
 type Bloco = [Comando]
 
 data Comando =
@@ -53,6 +51,7 @@ data Comando =
     | Proc Id [Expr]
     deriving Show
 
+data Programa = Prog [Funcao] [(Id, [Var], Bloco)] [Var] Bloco deriving Show
 
 aux :: (Funcao, ([Var], Bloco)) -> (Id, [Var], Bloco)
 aux ((id :->: (vars, tipo)), (vars', bloco)) = (id, vars ++ vars', bloco)

@@ -158,7 +158,7 @@ Factor : Int                {Const (CInt $1)}
 parseError :: [Token] -> a
 parseError s = error ("Parse error:" ++ show s)
 
-runin = do 
+run = do 
         s <- readFile "in"
         print (calc (L.alexScanTokens s))
 
