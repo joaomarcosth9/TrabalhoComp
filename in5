@@ -1,0 +1,7 @@
+int fun(int a, int b) {
+    return a + b;
+}
+{
+    double a, b;
+    print(fun(a, b));
+}

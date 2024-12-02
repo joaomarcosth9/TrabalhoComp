@@ -89,22 +89,6 @@ checkVariaveis' ((id :#: (tipo, _)) : vs) declaradas
 checkVariaveis :: [Var] -> M [Var]
 checkVariaveis vars = checkVariaveis' vars []
 
--- \| Atrib Id Expr
--- \| Leitura Id
--- \| Imp Expr
--- \| Ret (Maybe Expr)
--- \| Proc Id [Expr]
-
---     data TCons = CDouble Double
---            | CInt Int
---            deriving Show
-
--- data Expr =
---           | Chamada Id [Expr]
---           | IntDouble Expr
---           | DoubleInt Expr
---           deriving Show
-
 checkExprTipos :: [Funcao] -> [Var] -> Expr -> Expr -> (Expr -> Expr -> Expr) -> M (Tipo, Expr)
 checkExprTipos funcoes vars expr1 expr2 op = do
   (tipo1, expr1') <- checkExpr funcoes vars expr1
@@ -125,6 +109,31 @@ checkExprTipos funcoes vars expr1 expr2 op = do
               pure (TDouble, op expr1' (IntDouble expr2'))
             else
               pure (tipo1, op expr1' expr2')
+
+
+--- funcao, lista de tipos esperados, lista de pares (tipos, exprs) recebidos
+checkParametrosTipos :: Funcao -> [Tipo] -> [(Tipo, Expr)] -> M [Expr]
+checkParametrosTipos _ [] [] = pure []
+checkParametrosTipos (id :->: (_, _)) (tipo : tipos) ((tipo', expr) : exprs)
+  | tipo == tipo' = do
+      exprs' <- checkParametrosTipos (id :->: ([], TVoid)) tipos exprs
+      pure (expr : exprs')
+  | tipo == TInt && tipo' == TDouble = do
+      emiteAviso ("Double sendo convertido para inteiro.")
+      exprs' <- checkParametrosTipos (id :->: ([], TVoid)) tipos exprs
+      pure (DoubleInt expr : exprs')
+  | tipo == TDouble && tipo' == TInt = do
+      emiteAviso ("Inteiro sendo convertido para double.")
+      exprs' <- checkParametrosTipos (id :->: ([], TVoid)) tipos exprs
+      pure (IntDouble expr : exprs')
+  | tipo == TString = do
+      emiteErro ("Nao e possivel passar um numero como parametro para uma string.")
+      exprs' <- checkParametrosTipos (id :->: ([], TVoid)) tipos exprs
+      pure (expr : exprs')
+  | otherwise = do
+      emiteErro ("Nao e possivel passar uma string como parametro para um numero.")
+      exprs' <- checkParametrosTipos (id :->: ([], TVoid)) tipos exprs
+      pure (expr : exprs')
 
 checkExpr :: [Funcao] -> [Var] -> Expr -> M (Tipo, Expr)
 checkExpr funcoes vars (Const (CDouble a)) = pure (TDouble, Const (CDouble a))
@@ -169,21 +178,25 @@ checkExpr funcoes vars (Chamada id exprs) = do
       emiteErro ("Funcao '" ++ id ++ "' nao declarada.")
       pure (TVoid, Chamada id exprs)
     else do
+      tipo <- pure (retornoFuncao id funcoes)
       let n = numeroParamFuncao id funcoes
       if n /= length exprs
         then do
           emiteErro ("Numero de parametros incorreto para a funcao '" ++ id ++ "'.")
           pure (TVoid, Chamada id exprs)
         else do
-          let tipos = listaTiposParamFuncao id funcoes
-          exprs' <- mapM (checkExpr funcoes vars) exprs
-          let tipos' = map fst exprs'
-          if tipos /= tipos'
-            then do
-              emiteErro ("Tipos de parametros incorretos para a funcao '" ++ id ++ "'.")
-              pure (TVoid, Chamada id exprs)
-            else
-              pure (retornoFuncao id funcoes, Chamada id exprs)
+          checked_exprs <- mapM (checkExpr funcoes vars) exprs
+          new_exprs' <- checkParametrosTipos (id :->: (vars, tipo)) (listaTiposParamFuncao id funcoes) checked_exprs
+          pure (retornoFuncao id funcoes, Chamada id new_exprs')
+        --   let tipos = listaTiposParamFuncao id funcoes
+        --   exprs' <- mapM (checkExpr funcoes vars) exprs
+        --   let tipos' = map fst exprs'
+        --   if tipos /= tipos'
+        --     then do
+        --       emiteErro ("Tipos de parametros incorretos para a funcao '" ++ id ++ "'.")
+        --       pure (TVoid, Chamada id exprs)
+        --     else
+        --       pure (retornoFuncao id funcoes, Chamada id exprs)
 
 checkExprRTipos :: [Funcao] -> [Var] -> Expr -> Expr -> (Expr -> Expr -> ExprR) -> M (Tipo, ExprR)
 checkExprRTipos funcoes vars expr1 expr2 op = do
