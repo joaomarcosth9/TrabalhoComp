@@ -12,6 +12,7 @@ void fun() {
     int a;
     double a;
     double b;
+    string b;
     if (a == b) {
         print(a);
     }
