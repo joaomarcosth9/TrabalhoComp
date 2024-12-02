@@ -105,10 +105,10 @@ checkVariaveis vars = checkVariaveis' vars []
 --           | DoubleInt Expr
 --           deriving Show
 
-checkExprTipos :: [Funcao] -> [Var] -> M (Tipo, Expr) -> M (Tipo, Expr) -> (Expr -> Expr -> Expr) -> M (Tipo, Expr)
+checkExprTipos :: [Funcao] -> [Var] -> Expr -> Expr -> (Expr -> Expr -> Expr) -> M (Tipo, Expr)
 checkExprTipos funcoes vars expr1 expr2 op = do
-  (tipo1, expr1') <- expr1
-  (tipo2, expr2') <- expr2
+  (tipo1, expr1') <- checkExpr funcoes vars expr1
+  (tipo2, expr2') <- checkExpr funcoes vars expr2
   if (tipo1 == TString || tipo2 == TString)
     then do
       emiteErro ("Operador nao pode ser aplicado a strings.")
@@ -143,22 +143,10 @@ checkExpr funcoes vars (Neg expr) = do
     else do
       emiteErro ("Nao e possivel negativar uma string.")
       pure (TVoid, Neg expr')
-checkExpr funcoes vars (Add expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprTipos funcoes vars expr1' expr2' Add
-checkExpr funcoes vars (Sub expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprTipos funcoes vars expr1' expr2' Sub
-checkExpr funcoes vars (Mul expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprTipos funcoes vars expr1' expr2' Mul
-checkExpr funcoes vars (Div expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprTipos funcoes vars expr1' expr2' Div
+checkExpr funcoes vars (Add expr1 expr2) = do checkExprTipos funcoes vars expr1 expr2 Add
+checkExpr funcoes vars (Sub expr1 expr2) = do checkExprTipos funcoes vars expr1 expr2 Sub
+checkExpr funcoes vars (Mul expr1 expr2) = do checkExprTipos funcoes vars expr1 expr2 Mul
+checkExpr funcoes vars (Div expr1 expr2) = do checkExprTipos funcoes vars expr1 expr2 Div
 checkExpr funcoes vars (IntDouble expr) = do
   (tipo, expr') <- checkExpr funcoes vars expr
   if (tipo == TInt)
@@ -197,10 +185,10 @@ checkExpr funcoes vars (Chamada id exprs) = do
             else
               pure (retornoFuncao id funcoes, Chamada id exprs)
 
-checkExprRTipos :: [Funcao] -> [Var] -> M (Tipo, Expr) -> M (Tipo, Expr) -> (Expr -> Expr -> ExprR) -> M (Tipo, ExprR)
+checkExprRTipos :: [Funcao] -> [Var] -> Expr -> Expr -> (Expr -> Expr -> ExprR) -> M (Tipo, ExprR)
 checkExprRTipos funcoes vars expr1 expr2 op = do
-  (tipo1, expr1') <- expr1
-  (tipo2, expr2') <- expr2
+  (tipo1, expr1') <- checkExpr funcoes vars expr1
+  (tipo2, expr2') <- checkExpr funcoes vars expr2
   if (tipo1 == TString || tipo2 == TString)
     then do
       emiteErro ("Operador nao pode ser aplicado a strings.")
@@ -220,47 +208,23 @@ checkExprRTipos funcoes vars expr1 expr2 op = do
 
 checkExprR :: [Funcao] -> [Var] -> ExprR -> M ExprR
 checkExprR funcoes vars (Req expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprRTipos funcoes vars expr1' expr2' Req
-  (_, expr1'') <- expr1'
-  (_, expr2'') <- expr2'
-  pure (Req expr1'' expr2'')
+  (_, exprs) <- checkExprRTipos funcoes vars expr1 expr2 Req
+  pure exprs
 checkExprR funcoes vars (Rdif expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprRTipos funcoes vars expr1' expr2' Rdif
-  (_, expr1'') <- expr1'
-  (_, expr2'') <- expr2'
-  pure (Rdif expr1'' expr2'')
+  (_, exprs) <- checkExprRTipos funcoes vars expr1 expr2 Rdif
+  pure exprs
 checkExprR funcoes vars (Rlt expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprRTipos funcoes vars expr1' expr2' Rlt
-  (_, expr1'') <- expr1'
-  (_, expr2'') <- expr2'
-  pure (Rlt expr1'' expr2'')
+  (_, exprs) <- checkExprRTipos funcoes vars expr1 expr2 Rlt
+  pure exprs
 checkExprR funcoes vars (Rgt expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprRTipos funcoes vars expr1' expr2' Rgt
-  (_, expr1'') <- expr1'
-  (_, expr2'') <- expr2'
-  pure (Rgt expr1'' expr2'')
+  (_, exprs) <- checkExprRTipos funcoes vars expr1 expr2 Rgt
+  pure exprs
 checkExprR funcoes vars (Rle expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprRTipos funcoes vars expr1' expr2' Rle
-  (_, expr1'') <- expr1'
-  (_, expr2'') <- expr2'
-  pure (Rle expr1'' expr2'')
+  (_, exprs) <- checkExprRTipos funcoes vars expr1 expr2 Rle
+  pure exprs
 checkExprR funcoes vars (Rge expr1 expr2) = do
-  let expr1' = checkExpr funcoes vars expr1
-  let expr2' = checkExpr funcoes vars expr2
-  checkExprRTipos funcoes vars expr1' expr2' Rge
-  (_, expr1'') <- expr1'
-  (_, expr2'') <- expr2'
-  pure (Rge expr1'' expr2'')
+  (_, exprs) <- checkExprRTipos funcoes vars expr1 expr2 Rge
+  pure exprs
 
 checkExprL :: [Funcao] -> [Var] -> ExprL -> M ExprL
 checkExprL funcoes vars (And expr1 expr2) = do

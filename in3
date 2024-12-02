@@ -1,19 +1,17 @@
+int go(int a, int b) {
+    return a * b;
+}
 int fun(int a, int b) {
     double c;
-    return (a * b) + c;
-}
-void go(int a, int b) {
-    return;
-}
-void fun() {
-    return;
+    return go(a + b * c, c);
 }
 {
     int a;
-    double a;
     double b;
-    string b;
     if (a == b) {
+        print(a);
+    }
+    if (a + b == 1) {
         print(a);
     }
 }
