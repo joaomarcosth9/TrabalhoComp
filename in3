@@ -1,27 +1,18 @@
 int fun(int a, int b) {
-    int c;
+    double c;
     return (a * b) + c;
 }
 void go(int a, int b) {
     return;
 }
+void fun() {
+    return;
+}
 {
     int a;
     double a;
-    string a;
     double b;
-    string s, t;
-    b = 4.3;
-    a = 1;
-    t = "bomba";
-    s = "ababa";
-    if (a == 34) {
-        a = 4 * (b + 4.343);
-    }
-    if (t == s) {
-        t = "bomba";
-    }
-    while (a > 10) {
-        a = a - 1;
+    if (a == b) {
+        print(a);
     }
 }
