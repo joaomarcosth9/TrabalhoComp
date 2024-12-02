@@ -31,6 +31,9 @@ countId id (x : xs)
     | id == x = 1 + countId id xs
     | otherwise = countId id xs
 
+--checka funções
+
+
 checkVariaveis' :: [Var] -> [Id] -> Id -> M [Var]
 checkVariaveis' [] _ _ = pure []
 checkVariaveis' ((id :#: (tipo, _)) : vs) declared escopo
@@ -53,7 +56,117 @@ checkVariaveis vars escopo = checkVariaveis' vars [] escopo
     -- | Ret (Maybe Expr)
     -- | Proc Id [Expr]
 
-checkExpr :: [Funcao] -> Expr -> M Expr
+checkExpr :: [Funcao] -> [Var] -> Expr -> M Expr
+checkExpr funcoes _ (Cint n) = pure (Cint n)
+checkExpr funcoes _ (Cdouble n) = pure (Cdouble n)
+checkExpr funcoes _ (Lit s) = pure (Lit s)
+
+checkExpr funcoes vars (Var id) = do
+    case lookup id vars of
+        Just (tipo, _) -> pure (Var id)
+        Nothing -> do
+            emiteErro ("Variavel '" ++ id ++ "' nao declarada.")
+            pure (Var id)
+
+checkExpr funcoes vars (Neg expr) = do
+    expr' <- checkExpr funcoes vars expr
+    if( expr' == TString) then do
+        emiteErro ("Operador de negacao nao pode ser aplicado a uma string.")
+        pure (Neg expr')
+    else
+    pure (Neg expr')    
+
+checkExpr funcoes vars (IntDouble expr) = do
+    expr' <- checkExpr funcoes vars expr
+    if( expr' == Tint) then
+        pure (IntDouble expr')
+        else do
+            emiteErro ("Operador de conversao de inteiro para double nao pode ser aplicado.")
+            pure (IntDouble expr')
+
+
+checkExpr funcoes vars (DoubleInt expr) = do
+    expr' <- checkExpr funcoes vars expr
+    if( expr' == Tdouble) then
+        pure (DoubleInt expr')
+        else do
+            emiteErro ("Operador de conversao de double para inteiro nao pode ser aplicado.")
+            pure (DoubleInt expr')
+
+checkExpr funcoes vars (Add expr1 expr2) = do
+    expr1' <- checkExpr funcoes vars expr1
+    expr2' <- checkExpr funcoes vars expr2
+    if (expr1' == TString || expr2' == TString) then do
+        emiteErro ("Operador de adicao nao pode ser aplicado a strings.")
+        pure (Add expr1' expr2')
+    else if (expr1' == TInt && expr2' == TDouble) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Add (IntDouble expr1') expr2')
+    else if (expr1' == TDouble && expr2' == TInt) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Add expr1' (IntDouble expr2'))
+    else
+        pure (Add expr1' expr2')
+    
+checkExpr funcoes vars (Sub expr1 expr2) = do
+    expr1' <- checkExpr funcoes vars expr1
+    expr2' <- checkExpr funcoes vars expr2
+    if (expr1' == TString || expr2' == TString) then do
+        emiteErro ("Operador de subtracao nao pode ser aplicado a strings.")
+        pure (Sub expr1' expr2')
+    else if (expr1' == TInt && expr2' == TDouble) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Sub (IntDouble expr1') expr2')
+    else if (expr1' == TDouble && expr2' == TInt) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Sub expr1' (IntDouble expr2'))
+    else
+        pure (Sub expr1' expr2')
+    
+checkExpr funcoes vars (Mul expr1 expr2) = do
+    expr1' <- checkExpr funcoes vars expr1
+    expr2' <- checkExpr funcoes vars expr2
+    if (expr1' == TString || expr2' == TString) then do
+        emiteErro ("Operador de multiplicacao nao pode ser aplicado a strings.")
+        pure (Mul expr1' expr2')
+    else if (expr1' == TInt && expr2' == TDouble) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Mul (IntDouble expr1') expr2')
+    else if (expr1' == TDouble && expr2' == TInt) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Mul expr1' (IntDouble expr2'))
+    else
+        pure (Mul expr1' expr2')
+        
+checkExpr funcoes vars (Div expr1 expr2) = do
+    expr1' <- checkExpr funcoes vars expr1
+    expr2' <- checkExpr funcoes vars expr2
+    if (expr1' == TString || expr2' == TString) then do
+        emiteErro ("Operador de divisao nao pode ser aplicado a strings.")
+        pure (Div expr1' expr2')
+    else if (expr1' == TInt && expr2' == TDouble) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Div (IntDouble expr1') expr2')
+    else if (expr1' == TDouble && expr2' == TInt) then do
+        emiteAviso ("Inteiro sendo convertido para double.")
+        pure (Div expr1' (IntDouble expr2'))
+    else
+        pure (Div expr1' expr2')
+
+
+checkExpr funcoes vars (Chamada id exprs) = do
+    case lookup id funcoes of
+        Just (tipo, _) -> do
+            exprs' <- mapM (checkExpr funcoes vars) exprs
+            pure (Chamada id exprs')
+        Nothing -> do
+            emiteErro ("Funcao '" ++ id ++ "' nao declarada.")
+            pure (Chamada id exprs)
+
+-- Dudu ele cria o checkExpr com um parametro a mais, que é o tipo do operador ai ele faz um teste a mais que é checkExpr _ _ expr 
+-- Eu fiz separado 
+-- Espero que esteja certo :D 
+
 
 checkExprR :: [Funcao] -> ExprR -> M ExprR
 checkExprR funcoes (Req expr1 expr2) = do
@@ -120,9 +233,40 @@ checkComando funcoes (While exprL bloco) = do
 checkComando funcoes (Atrib id expr) = do
     expr' <- checkExpr funcoes expr
     -- tem que verificar mais coisas
+    case lookup id vars of
+        Just (tipo, _) -> do
+            if (tipo == TString && expr' /= TString) then do
+                emiteErro ("Atribuicao de tipo invalido para variavel '" ++ id ++ "'.")
+                pure (Atrib id expr')
+            else if (tipo == Tint && expr' == TDouble) then do
+                emiteAviso ("Double sendo convertido para inteiro.")
+                pure (Atrib id (DoubleInt expr'))
+            else if(tipo == Tdouble && expr' == TInt) then do
+                emiteAviso ("Inteiro sendo convertido para double.")
+                pure (Atrib id (IntDouble expr'))
+            else if(tipo == Tint && expr' /= Tint) then do
+                emiteErro ("Atribuicao de tipo invalido para variavel '" ++ id ++ "'.")
+                pure (Atrib id expr')
+            else if(tipo == Tdouble && expr' /= Tdouble) then do
+                emiteErro ("Atribuicao de tipo invalido para variavel '" ++ id ++ "'.")
+                pure (Atrib id expr')
+            else
+                pure (Atrib id expr')
+        Nothing -> do
+            emiteErro ("Variavel '" ++ id ++ "' nao declarada.")
+    -- Copilot cantou aqui, comparei com o dudu e ele fez bastante parecido, só que ele sempre separa o monada ali ele faz tipo (eType, new_expr)
+    -- nao sei porque ele faz isso
+    
     pure (Atrib id expr')
 
-checkComando funcoes (Leitura id) = pure (Leitura id)
+checkComando funcoes (Leitura id) = do
+    let tipo = case lookup id vars of
+        Just (tipo, _) -> tipo
+        Nothing -> do
+            emiteErro ("Variavel '" ++ id ++ "' nao declarada.")
+            TString
+            -- nao entendi porque o copilot sugeriu isso 
+    
 
 checkComando funcoes (Imp expr) = do
     expr' <- checkExpr funcoes expr
